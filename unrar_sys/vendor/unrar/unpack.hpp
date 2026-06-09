@@ -386,6 +386,9 @@ class Unpack:PackDef
     void AllowLargePages(bool Allow) {Alloc.AllowLargePages(Allow);}
     void DoUnpack(uint Method,bool Solid);
     bool IsFileExtracted() {return FileExtracted;}
+    // Read back the produced output size (used by hc_decompress_rar to
+    // sanity-check decompression before trusting the CRC).
+    int64 GetWrittenFileSize() {return WrittenFileSize;}
     void SetDestSize(int64 DestSize) {DestUnpSize=DestSize;FileExtracted=false;}
     void SetSuspended(bool Suspended) {Unpack::Suspended=Suspended;}
 

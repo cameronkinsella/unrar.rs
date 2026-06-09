@@ -70,6 +70,11 @@ class ComprDataIO
          const byte *Salt,const byte *InitV,uint Lg2Cnt,byte *HashKey,byte *PswCheck);
     void SetCmt13Encryption();
     void SetUnpackToMemory(byte *Addr,uint Size);
+    // Feed packed input from a memory buffer + inject a pre-derived RAR3 key/IV
+    // (see hc_decompress_rar). The memory read path in UnpRead chunks correctly,
+    // so any packed size works.
+    void SetUnpackFromMemory(byte *Addr,size_t Size);
+    void InitRijindal(byte *Key,byte *InitV);
     void SetCurrentCommand(wchar Cmd) {CurrentCommand=Cmd;}
     void AdjustTotalArcSize(Archive *Arc);
 

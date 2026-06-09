@@ -372,6 +372,24 @@ unsafe extern "C" {
         handle: *const Handle,
         dest_path: *const wchar_t,
     ) -> c_int;
+
+    /// Decrypt + decompress a single RAR3 file body from memory using a
+    /// *pre-derived* AES-128 key + CBC IV (no password KDF), returning the CRC-32
+    /// of the decompressed output. Pair the key/IV with the file's packed bytes and
+    /// compare the returned CRC against the file header's CRC.
+    ///
+    /// `out_buf` must point to at least `unpack_size` writable bytes. `*unpack_failed`
+    /// is set to 1 if decompression produced the wrong number of bytes (or threw),
+    /// else 0. Safe to call on wrong keys: a garbage stream is caught internally.
+    pub fn hc_decompress_rar(
+        out_buf: *mut c_uchar,
+        input: *const c_uchar,
+        pack_size: c_uint,
+        unpack_size: c_uint,
+        key: *const c_uchar,
+        iv: *const c_uchar,
+        unpack_failed: *mut c_uint,
+    ) -> c_uint;
 }
 
 // ----------------- MINIMAL ABSTRACTIONS ----------------- //

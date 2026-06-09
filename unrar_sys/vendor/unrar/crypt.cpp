@@ -43,6 +43,14 @@ void CryptData::DecryptBlock(byte *Buf,size_t Size)
 }
 
 
+// Inject a pre-derived RAR3 AES-128-CBC key + IV (no password KDF).
+void CryptData::SetRijndalDecryptKey(byte *Key,byte *InitV)
+{
+  Method=CRYPT_RAR30;
+  rin.Init(false,Key,128,InitV);
+}
+
+
 bool CryptData::SetCryptKeys(bool Encrypt,CRYPT_METHOD Method,
      SecPassword *Password,const byte *Salt,
      const byte *InitV,uint Lg2Cnt,byte *HashKey,byte *PswCheck)

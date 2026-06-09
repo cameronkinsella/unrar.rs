@@ -65,6 +65,7 @@ fn main() {
         "filestr",
         "scantree",
         "dll",
+        "hc_decompress_rar", // key-injection RAR3 decrypt+decompress shim
         "qopen",
         "largepage",  // New in unrar 7.x for large page memory allocation
         #[cfg(windows)]

@@ -108,6 +108,9 @@ class CryptData
     void EncryptBlock(byte *Buf,size_t Size);
     void DecryptBlock(byte *Buf,size_t Size);
     static void SetSalt(byte *Salt,size_t SaltSize);
+    // Inject a pre-derived RAR3 (AES-128-CBC) key + IV directly, bypassing the
+    // password-based KDF. Used by hc_decompress_rar.
+    void SetRijndalDecryptKey(byte *Key,byte *InitV);
 };
 
 

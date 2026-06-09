@@ -141,10 +141,12 @@
 pub use archive::Archive;
 use unrar_ng_sys as native;
 mod archive;
+pub mod decompress;
 pub mod error;
 mod locale;
 mod pathed;
 mod open_archive;
+pub use decompress::{Rar3Decompressed, decompress_rar3_block};
 pub use error::UnrarResult;
 pub use open_archive::{
     CursorBeforeFile, CursorBeforeHeader, ExtractEvent, ExtractStatus, FileHeader, List, ListSplit,

@@ -72,9 +72,16 @@ int ComprDataIO::UnpRead(byte *Addr,size_t Count)
 
     if (UnpackFromMemory)
     {
-      memcpy(Addr,UnpackFromMemoryAddr,UnpackFromMemorySize);
-      ReadSize=(int)UnpackFromMemorySize;
-      UnpackFromMemorySize=0;
+      // Chunk like the file path so any packed size works (the prior
+      // single-memcpy assumed the whole buffer fit the unpacker's read buffer,
+      // capping size; chunking removes that cap). Count is block-aligned above
+      // when decrypting, and RAR3 packed data is block-aligned, so each chunk
+      // stays aligned for CBC.
+      size_t SizeToRead=((size_t)Count>UnpackFromMemorySize) ? UnpackFromMemorySize:(size_t)Count;
+      memcpy(ReadAddr,UnpackFromMemoryAddr,SizeToRead);
+      UnpackFromMemoryAddr+=SizeToRead;
+      UnpackFromMemorySize-=SizeToRead;
+      ReadSize=(int)SizeToRead;
     }
     else
     {
@@ -155,17 +162,23 @@ void ComprDataIO::UnpWrite(byte *Addr,size_t Count)
 {
 
 #ifdef RARDLL
-  CommandData *Cmd=((Archive *)SrcFile)->GetCommandData();
-  if (Cmd->DllOpMode!=RAR_SKIP)
+  // The standalone hc_decompress_rar path has no source archive (SrcFile==NULL)
+  // and unpacks to memory, so there is no callback context — skip the DLL
+  // callback dispatch to avoid a NULL deref of SrcFile.
+  if (SrcFile!=NULL)
   {
-    if (Cmd->Callback!=NULL &&
-        Cmd->Callback(UCM_PROCESSDATA,Cmd->UserData,(LPARAM)Addr,Count)==-1)
-      ErrHandler.Exit(RARX_USERBREAK);
-    if (Cmd->ProcessDataProc!=NULL)
+    CommandData *Cmd=((Archive *)SrcFile)->GetCommandData();
+    if (Cmd->DllOpMode!=RAR_SKIP)
     {
-      int RetCode=Cmd->ProcessDataProc(Addr,(int)Count);
-      if (RetCode==0)
+      if (Cmd->Callback!=NULL &&
+          Cmd->Callback(UCM_PROCESSDATA,Cmd->UserData,(LPARAM)Addr,Count)==-1)
         ErrHandler.Exit(RARX_USERBREAK);
+      if (Cmd->ProcessDataProc!=NULL)
+      {
+        int RetCode=Cmd->ProcessDataProc(Addr,(int)Count);
+        if (RetCode==0)
+          ErrHandler.Exit(RARX_USERBREAK);
+      }
     }
   }
 #endif // RARDLL
@@ -284,6 +297,25 @@ void ComprDataIO::SetUnpackToMemory(byte *Addr,uint Size)
   UnpackToMemory=true;
   UnpackToMemoryAddr=Addr;
   UnpackToMemorySize=Size;
+}
+
+
+// Source packed input from a memory buffer (chunked in UnpRead).
+void ComprDataIO::SetUnpackFromMemory(byte *Addr,size_t Size)
+{
+  UnpackFromMemory=true;
+  UnpackFromMemoryAddr=Addr;
+  UnpackFromMemorySize=Size;
+}
+
+
+// Inject a pre-derived RAR3 AES key + IV (no password KDF).
+void ComprDataIO::InitRijindal(byte *Key,byte *InitV)
+{
+#ifndef RAR_NOCRYPT
+  Decryption=true;
+  Decrypt->SetRijndalDecryptKey(Key,InitV);
+#endif
 }
 
 
